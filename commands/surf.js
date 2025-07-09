@@ -67,7 +67,7 @@ export async function surf(term, loc, codes) {
   const [wIcon, wDesc] = codes[cw.weathercode] || ['❓','Unknown'];
   const wind = cw.windspeed;
 
-  // 4) Parse marine snapshot
+  // 4) Parse current marine snapshot
   const mc = marineRes.current || {};
 
   // 5) Compute today's high/low tides
@@ -89,18 +89,18 @@ export async function surf(term, loc, codes) {
   term.writeln(`Waves: ${mc.wave_height?.toFixed(1) ?? '–'} m • Weather: ${wIcon} ${wDesc}`);
 
   // 7) Draw an ASCII tide graph for the day
-  //    Map tide heights to blocks ▁▂▃▄▅▆▇█
   const blocks = ['▁','▂','▃','▄','▅','▆','▇','█'];
   const minT = Math.min(...tides), maxT = Math.max(...tides);
-  const range = maxT - minT || 1;
+  const range = (maxT - minT) || 1;
   const spark = tides.map(h => {
     const idx = Math.floor((h - minT) / range * (blocks.length - 1));
     return blocks[idx];
   }).join('');
 
-  // Mark current position
-  const nowISO = cw.time.split(':00')[0];
-  const nowIdx = times.findIndex(t => t.startsWith(nowISO));
+  // Mark current position safely
+  const nowPrefix = cw.time.substr(0, 13);           // "YYYY-MM-DDTHH"
+  let nowIdx = times.findIndex(t => t.startsWith(nowPrefix));
+  if (nowIdx < 0) nowIdx = 0;
   const markerLine = ' '.repeat(nowIdx) + '▲ now';
 
   term.writeln(`Graph: ${spark}`);
